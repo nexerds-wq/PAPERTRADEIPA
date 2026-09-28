@@ -14,25 +14,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Select Xcode
+      - name: Show repository files
         run: |
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-          xcodebuild -version
-
-      - name: Show project files
-        run: |
+          echo "CURRENT DIRECTORY:"
           pwd
-          find . -maxdepth 3 -type f | sort
 
-      - name: Clean build folder
+          echo "PROJECT FILES:"
+          find . -name "*.xcodeproj" -print
+
+          echo "ALL FILES:"
+          find . -maxdepth 4 -type f | sort
+
+      - name: Find Xcode project
+        run: |
+          PROJECT=$(find . -name "*.xcodeproj" -type d | head -n 1)
+
+          if [ -z "$PROJECT" ]; then
+            echo "ERROR: No .xcodeproj was found anywhere in the repository."
+            exit 1
+          fi
+
+          echo "Found project: $PROJECT"
+          echo "PROJECT_PATH=$PROJECT" >> "$GITHUB_ENV"
+
+      - name: Find scheme
+        run: |
+          echo "Available schemes:"
+          xcodebuild -project "$PROJECT_PATH" -list
+
+      - name: Build unsigned iPhone app
         run: |
           rm -rf build
           mkdir -p build
 
-      - name: Build unsigned iPhone app
-        run: |
           xcodebuild \
-            -project NexerPaperTrader.xcodeproj \
+            -project "$PROJECT_PATH" \
             -scheme NexerPaperTrader \
             -configuration Release \
             -sdk iphoneos \
@@ -44,24 +60,26 @@ jobs:
 
       - name: Find built app
         run: |
-          APP_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -name "*.app" -type d | head -n 1)
+          APP_PATH=$(find build/DerivedData/Build/Products -name "*.app" -type d | head -n 1)
 
           if [ -z "$APP_PATH" ]; then
-            echo "Could not find built .app"
+            echo "ERROR: Built .app could not be found."
             exit 1
           fi
 
-          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
-          echo "Found app at: $APP_PATH"
+          echo "Found app:"
+          echo "$APP_PATH"
 
-      - name: Create unsigned IPA
+          echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
+
+      - name: Create IPA
         run: |
-          mkdir -p Payload
+          rm -rf Payload
+          mkdir Payload
+
           cp -R "$APP_PATH" Payload/
 
           zip -r NexerPaperTrader-Unsigned.ipa Payload
-
-          rm -rf Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
