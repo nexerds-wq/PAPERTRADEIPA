@@ -1,0 +1,115 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D3003D06FA6548A9B1692580 /* NexerPaperTraderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDD59229CA4A7FCE6BB7D624 /* NexerPaperTraderApp.swift */; };
+		E0F51D63749081B5E0FF27BA /* Asset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160ECB20172AE61BBA9CFCC4 /* Asset.swift */; };
+		0CBBE32CA690E2DB7A35C115 /* Portfolio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AEB3C4905F25C394499CDD6 /* Portfolio.swift */; };
+		E4ED82FD0C3E1E4396B37A6D /* MarketDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1FAFE408BD8265B68D64CF /* MarketDataService.swift */; };
+		21232685B969A6125BA792BE /* PortfolioStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF66352591405BE8EFE3828 /* PortfolioStore.swift */; };
+		C626A2B0FEFBF246EDE61E44 /* Indicators.swift in Sources */ = {isa = PBXBuildFile; fileRef = B438E774F610A55CFF024D64 /* Indicators.swift */; };
+		CAF63E89F3BB11CDD7D5E76B /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F033A6480774C0D3910AF2 /* RootView.swift */; };
+		976B38AA8CB49D7754EF1CE5 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEBB3AD6A7AE694F88BEC239 /* HomeView.swift */; };
+		F9C0720BB776C4684B91AA99 /* MarketsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9C0044FFED79B15C372E417 /* MarketsView.swift */; };
+		74C98A729A30AE3A57294E2C /* CandlestickChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CD1BAA168E6CFFE02447B72 /* CandlestickChartView.swift */; };
+		4AE4C7517FF9ECAFCE5094F5 /* AssetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC13AC1EE0400272EFC62B6 /* AssetDetailView.swift */; };
+		44E7F01F2B6AC052BD86D0F4 /* TradeTicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A3123265E72348B9E87300 /* TradeTicketView.swift */; };
+		D3BC62BD78654EB606BD4D7A /* PortfolioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7D5BB7F069E8454C5D2149A /* PortfolioView.swift */; };
+		C1E2164D90008EB1DE88273A /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC65BE7FB08118F36E66762 /* HistoryView.swift */; };
+		222F0DBFFE5EB23DCD3FD16F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6C36FFE920F24CEDB7CFDBFC /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		FDD59229CA4A7FCE6BB7D624 /* NexerPaperTraderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NexerPaperTraderApp.swift"; sourceTree = "<group>"; };
+		160ECB20172AE61BBA9CFCC4 /* Asset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Models/Asset.swift"; sourceTree = "<group>"; };
+		3AEB3C4905F25C394499CDD6 /* Portfolio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Models/Portfolio.swift"; sourceTree = "<group>"; };
+		EA1FAFE408BD8265B68D64CF /* MarketDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services/MarketDataService.swift"; sourceTree = "<group>"; };
+		4EF66352591405BE8EFE3828 /* PortfolioStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services/PortfolioStore.swift"; sourceTree = "<group>"; };
+		B438E774F610A55CFF024D64 /* Indicators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Utilities/Indicators.swift"; sourceTree = "<group>"; };
+		D1F033A6480774C0D3910AF2 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/RootView.swift"; sourceTree = "<group>"; };
+		EEBB3AD6A7AE694F88BEC239 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/HomeView.swift"; sourceTree = "<group>"; };
+		B9C0044FFED79B15C372E417 /* MarketsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/MarketsView.swift"; sourceTree = "<group>"; };
+		1CD1BAA168E6CFFE02447B72 /* CandlestickChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/CandlestickChartView.swift"; sourceTree = "<group>"; };
+		4CC13AC1EE0400272EFC62B6 /* AssetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/AssetDetailView.swift"; sourceTree = "<group>"; };
+		E0A3123265E72348B9E87300 /* TradeTicketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/TradeTicketView.swift"; sourceTree = "<group>"; };
+		E7D5BB7F069E8454C5D2149A /* PortfolioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/PortfolioView.swift"; sourceTree = "<group>"; };
+		9AC65BE7FB08118F36E66762 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/HistoryView.swift"; sourceTree = "<group>"; };
+		6C36FFE920F24CEDB7CFDBFC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B6CDB6E5D160E013280D3C68 /* NexerPaperTrader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NexerPaperTrader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CF5BDB0BEAFE176F9629192A = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		ADCF10F76EBF2A74473E9DC4 = {isa = PBXGroup; children = (6E561478C8B2EF0A22345336 /* NexerPaperTrader */, 00C45FD35CB0F9C5F764F070 /* Products */); sourceTree = "<group>"; };
+		6E561478C8B2EF0A22345336 /* NexerPaperTrader */ = {isa = PBXGroup; path = NexerPaperTrader; sourceTree = "<group>"; children = (
+			FDD59229CA4A7FCE6BB7D624 /* NexerPaperTraderApp.swift */,
+			160ECB20172AE61BBA9CFCC4 /* Asset.swift */,
+			3AEB3C4905F25C394499CDD6 /* Portfolio.swift */,
+			EA1FAFE408BD8265B68D64CF /* MarketDataService.swift */,
+			4EF66352591405BE8EFE3828 /* PortfolioStore.swift */,
+			B438E774F610A55CFF024D64 /* Indicators.swift */,
+			D1F033A6480774C0D3910AF2 /* RootView.swift */,
+			EEBB3AD6A7AE694F88BEC239 /* HomeView.swift */,
+			B9C0044FFED79B15C372E417 /* MarketsView.swift */,
+			1CD1BAA168E6CFFE02447B72 /* CandlestickChartView.swift */,
+			4CC13AC1EE0400272EFC62B6 /* AssetDetailView.swift */,
+			E0A3123265E72348B9E87300 /* TradeTicketView.swift */,
+			E7D5BB7F069E8454C5D2149A /* PortfolioView.swift */,
+			9AC65BE7FB08118F36E66762 /* HistoryView.swift */,
+			6C36FFE920F24CEDB7CFDBFC /* Assets.xcassets */,
+		); };
+		00C45FD35CB0F9C5F764F070 /* Products */ = {isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (B6CDB6E5D160E013280D3C68 /* NexerPaperTrader.app */); };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		29C7B681C8D62CBAC94D51C0 /* NexerPaperTrader */ = {isa = PBXNativeTarget; buildConfigurationList = D28A2B497FA98060CD1B56AC; buildPhases = (1CDF2F71A52B082132B04DFF, CF5BDB0BEAFE176F9629192A, C02F1309AF4906C92F1EAD44); buildRules = (); dependencies = (); name = NexerPaperTrader; productName = NexerPaperTrader; productReference = B6CDB6E5D160E013280D3C68; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = {29C7B681C8D62CBAC94D51C0 = {CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = B0D3B7D22269663DD77FCD84; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = ADCF10F76EBF2A74473E9DC4; productRefGroup = 00C45FD35CB0F9C5F764F070; projectDirPath = ""; projectRoot = ""; targets = (29C7B681C8D62CBAC94D51C0); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C02F1309AF4906C92F1EAD44 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (222F0DBFFE5EB23DCD3FD16F); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1CDF2F71A52B082132B04DFF = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+			D3003D06FA6548A9B1692580 /* NexerPaperTraderApp.swift in Sources */,
+			E0F51D63749081B5E0FF27BA /* Asset.swift in Sources */,
+			0CBBE32CA690E2DB7A35C115 /* Portfolio.swift in Sources */,
+			E4ED82FD0C3E1E4396B37A6D /* MarketDataService.swift in Sources */,
+			21232685B969A6125BA792BE /* PortfolioStore.swift in Sources */,
+			C626A2B0FEFBF246EDE61E44 /* Indicators.swift in Sources */,
+			CAF63E89F3BB11CDD7D5E76B /* RootView.swift in Sources */,
+			976B38AA8CB49D7754EF1CE5 /* HomeView.swift in Sources */,
+			F9C0720BB776C4684B91AA99 /* MarketsView.swift in Sources */,
+			74C98A729A30AE3A57294E2C /* CandlestickChartView.swift in Sources */,
+			4AE4C7517FF9ECAFCE5094F5 /* AssetDetailView.swift in Sources */,
+			44E7F01F2B6AC052BD86D0F4 /* TradeTicketView.swift in Sources */,
+			D3BC62BD78654EB606BD4D7A /* PortfolioView.swift in Sources */,
+			C1E2164D90008EB1DE88273A /* HistoryView.swift in Sources */,
+		); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		62C0502E9DD2F4A0E153A290 = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; GCC_C_LANGUAGE_STANDARD = gnu17; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Debug; };
+		A1076DB52F6D567F23A74575 = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; GCC_C_LANGUAGE_STANDARD = gnu17; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Release; };
+		9586E89FBE346731A8FAC1E8 = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Nexer Trading"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance"; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.nexer.papertrader; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		C08309BB1D0C93C4165F9DF3 = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Nexer Trading"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance"; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.nexer.papertrader; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_COMPILATION_MODE = wholemodule; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B0D3B7D22269663DD77FCD84 = {isa = XCConfigurationList; buildConfigurations = (62C0502E9DD2F4A0E153A290, A1076DB52F6D567F23A74575); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		D28A2B497FA98060CD1B56AC = {isa = XCConfigurationList; buildConfigurations = (9586E89FBE346731A8FAC1E8, C08309BB1D0C93C4165F9DF3); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}
