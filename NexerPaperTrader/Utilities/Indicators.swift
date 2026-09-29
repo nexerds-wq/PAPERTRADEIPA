@@ -239,7 +239,11 @@ enum Indicators {
         let spread = abs(e20 - e50) / abs(close) * 100
         var score = min(spread * 20, 65)
         if bull || bear { score += 20 }
-        if let e200, (bull && e50 > e200) || (bear && e50 < e200) { score += 15 }
+        if let longEMA = ema200 {
+            if (bull && e50 > longEMA) || (bear && e50 < longEMA) {
+                score += 15
+            }
+        }
         return min(100, max(0, score))
     }
 
