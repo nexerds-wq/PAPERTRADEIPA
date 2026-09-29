@@ -25,7 +25,7 @@ struct PaperOrder: Identifiable, Codable, Hashable {
     let quantity: Double
     let requestedPrice: Double?
     let fillPrice: Double?
-    let status: OrderStatus
+    var status: OrderStatus
     let createdAt: Date
 }
 
