@@ -45,7 +45,6 @@ enum Indicators {
         var confirmations = 0
         var reasons: [String] = []
 
-        // Trend is the main filter. A quick signal should not come from RSI alone.
         if let e20, let e50 {
             if last > e20 && e20 > e50 {
                 score += 24
@@ -84,7 +83,6 @@ enum Indicators {
             }
         }
 
-        // RSI confirms momentum, but overbought/oversold is not treated as an automatic reversal.
         if let r = rsiValue {
             if r >= 52 && r <= 68 {
                 score += 12
@@ -218,7 +216,10 @@ enum Indicators {
         for i in 1..<candles.count {
             let c = candles[i]
             let previousClose = candles[i - 1].close
-            values.append(max(c.high - c.low, abs(c.high - previousClose), abs(c.low - previousClose)))
+            let highLow = c.high - c.low
+            let highPrevious = abs(c.high - previousClose)
+            let lowPrevious = abs(c.low - previousClose)
+            values.append(max(highLow, max(highPrevious, lowPrevious)))
         }
         return sma(values, period: period)
     }
