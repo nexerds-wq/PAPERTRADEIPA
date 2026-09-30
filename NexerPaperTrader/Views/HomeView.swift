@@ -52,7 +52,32 @@ struct HomeView: View {
         .navigationTitle("Nexer Trading")
         .navigationDestination(for: Asset.self) { AssetDetailView(asset: $0) }
         .refreshable { await market.refreshUniverse() }
-        .task { if market.quotes.isEmpty { await market.refreshUniverse() } }
+        .task {
+            if market.quotes.isEmpty { await market.refreshUniverse() }
+
+            var cycle = 0
+            while !Task.isCancelled {
+                await refreshPositions()
+                cycle += 1
+
+                // Keep the broader market list moving too, without hammering the free endpoint.
+                if cycle >= 9 {
+                    cycle = 0
+                    await market.refreshUniverse()
+                }
+
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+            }
+        }
+    }
+
+    @MainActor
+    private func refreshPositions() async {
+        for position in portfolio.positions {
+            guard let asset = Asset.universe.first(where: { $0.id == position.assetID }) else { continue }
+            _ = await market.quote(for: asset, force: true)
+        }
+        portfolio.evaluateOpenOrders(quotes: market.quotes)
     }
 }
 
