@@ -119,10 +119,17 @@ struct AssetDetailView: View {
             TradeTicketView(asset: asset, initialSide: side)
         }
         .task {
-            _ = await market.quote(for: asset)
+            _ = await market.quote(for: asset, force: true)
             await loadCandles()
             await loadSignalCandles()
             portfolio.evaluateOpenOrders(quotes: market.quotes)
+
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                guard !Task.isCancelled else { break }
+                _ = await market.quote(for: asset, force: true)
+                portfolio.evaluateOpenOrders(quotes: market.quotes)
+            }
         }
         .refreshable {
             _ = await market.quote(for: asset, force: true)
