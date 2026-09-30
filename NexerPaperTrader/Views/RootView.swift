@@ -225,7 +225,7 @@ struct RobotTraderView: View {
         // PortfolioStore persists the fake cash; use it plus latest cached marks for a conservative robot guard.
         var v = portfolio.cash
         for a in scanUniverse {
-            if let p = portfolio.position(for: a.id) { v += p.quantity * (market.quotes[a.id]?.price ?? p.averageCost) }
+            if let p = portfolio.position(for: a.id) { v += p.quantity * (market.quotes[a.id]?.price ?? p.averagePrice) }
         }
         return v
     }
