@@ -4,6 +4,7 @@ struct PortfolioView: View {
     @EnvironmentObject var portfolio: PortfolioStore
     @EnvironmentObject var market: MarketDataService
     @State private var showReset = false
+
     var body: some View {
         List {
             Section("Account") {
@@ -24,5 +25,20 @@ struct PortfolioView: View {
         .navigationTitle("Portfolio")
         .navigationDestination(for: Asset.self) { AssetDetailView(asset: $0) }
         .alert("Reset to $10,000?", isPresented: $showReset) { Button("Reset", role: .destructive) { portfolio.reset() }; Button("Cancel", role: .cancel) {} } message: { Text("This deletes all paper positions and trade history.") }
+        .task {
+            while !Task.isCancelled {
+                await refreshPositions()
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+            }
+        }
+    }
+
+    @MainActor
+    private func refreshPositions() async {
+        for position in portfolio.positions {
+            guard let asset = Asset.universe.first(where: { $0.id == position.assetID }) else { continue }
+            _ = await market.quote(for: asset, force: true)
+        }
+        portfolio.evaluateOpenOrders(quotes: market.quotes)
     }
 }
