@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 import UserNotifications
 
 struct RootView: View {
@@ -22,8 +23,6 @@ struct RootView: View {
         }
     }
 }
-
-// MARK: - Shared helpers
 
 private let liquidSymbols = [
     "SPY","QQQ","AAPL","MSFT","NVDA","META",
@@ -178,8 +177,6 @@ private struct StatCard: View {
     }
 }
 
-// MARK: - VWAP
-
 private struct VWAPSignal: Identifiable {
     let asset: Asset
     let price: Double
@@ -213,11 +210,14 @@ struct VWAPAutoTraderView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                header(
-                    title: "VWAP Momentum",
-                    subtitle: "5-minute intraday breakout paper trader",
-                    enabled: enabled
-                )
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("VWAP Momentum").font(.largeTitle.bold())
+                        Text("5-minute intraday breakout paper trader").foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Circle().fill(enabled ? Color.green : Color.gray).frame(width: 14, height: 14)
+                }
 
                 summaryCards
 
@@ -234,11 +234,9 @@ struct VWAPAutoTraderView: View {
                     .buttonStyle(.borderedProminent)
                     .tint(enabled ? .red : .green)
 
-                    Button("SCAN NOW") {
-                        Task { await scanAndTrade(force: true) }
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(scanning)
+                    Button("SCAN NOW") { Task { await scanAndTrade(force: true) } }
+                        .buttonStyle(.bordered)
+                        .disabled(scanning)
                 }
 
                 if scanning { ProgressView("Scanning VWAP setups…") }
@@ -246,22 +244,32 @@ struct VWAPAutoTraderView: View {
 
                 Text("Current setups").font(.title2.bold())
                 if signals.isEmpty {
-                    Text("No qualifying setup right now.")
-                        .foregroundStyle(.secondary)
+                    Text("No qualifying setup right now.").foregroundStyle(.secondary)
                 } else {
-                    ForEach(signals) { signal in
-                        strategyRow(signal)
+                    ForEach(signals) { s in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(s.asset.displaySymbol).bold()
+                                Text("Price \(money(s.price)) • VWAP \(money(s.vwap)) • RVOL \(String(format: "%.2fx", s.rvol))")
+                                    .font(.caption2).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing) {
+                                Text(s.action).bold().foregroundStyle(.green)
+                                Text("Stop \(money(s.stop))").font(.caption2)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color.secondary.opacity(0.10))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                 }
 
                 Text("Activity").font(.title2.bold())
                 ForEach(Array(log.prefix(20).enumerated()), id: \.offset) { _, line in
-                    Text(line)
-                        .font(.caption.monospaced())
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(line).font(.caption.monospaced()).frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            .padding()
+            }.padding()
         }
         .navigationTitle("VWAP")
         .task {
@@ -285,54 +293,14 @@ struct VWAPAutoTraderView: View {
                 StatCard(title: "OPEN POSITIONS", value: "\(portfolio.positions.count)/\(maxPositions)")
             }
             HStack(spacing: 10) {
-                StatCard(
-                    title: "BACKTEST EST.",
-                    value: stats.backtestWinRate.map { "\(pct($0)) • \(stats.backtestTrades) trades" } ?? "collecting"
-                )
-                StatCard(
-                    title: "LIVE PAPER",
-                    value: stats.liveWinRate.map { "\(pct($0)) • \(stats.liveTrades) closed" } ?? "0 closed"
-                )
+                StatCard(title: "BACKTEST EST.", value: stats.backtestWinRate.map { "\(pct($0)) • \(stats.backtestTrades) trades" } ?? "collecting")
+                StatCard(title: "LIVE PAPER", value: stats.liveWinRate.map { "\(pct($0)) • \(stats.liveTrades) closed" } ?? "0 closed")
             }
             HStack(spacing: 10) {
                 StatCard(title: "REALIZED P/L", value: money(stats.realizedPL))
                 StatCard(title: "SCAN", value: enabled ? "60 sec" : "OFF")
             }
         }
-    }
-
-    @ViewBuilder
-    private func header(title: String, subtitle: String, enabled: Bool) -> some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(title).font(.largeTitle.bold())
-                Text(subtitle).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Circle()
-                .fill(enabled ? Color.green : Color.gray)
-                .frame(width: 14, height: 14)
-        }
-    }
-
-    private func strategyRow(_ s: VWAPSignal) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(s.asset.displaySymbol).bold()
-                Text("Price \(money(s.price)) • VWAP \(money(s.vwap)) • RVOL \(String(format: "%.2fx", s.rvol))")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing) {
-                Text(s.action).bold().foregroundStyle(s.action == "BUY" ? .green : .orange)
-                Text("Stop \(money(s.stop))")
-                    .font(.caption2)
-            }
-        }
-        .padding(12)
-        .background(Color.secondary.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     @MainActor
@@ -347,65 +315,35 @@ struct VWAPAutoTraderView: View {
         var btWins = 0
         var btTrades = 0
 
-        // First manage positions owned by this strategy.
         for asset in liquidAssets() {
             guard strategyOwner(asset.id) == "VWAP",
                   let position = portfolio.position(for: asset.id),
                   let quote = await market.quote(for: asset, force: true) else { continue }
-
             do {
                 let bars = try await market.fetchCandles(symbol: asset.symbol, range: "5d", interval: "5m")
                 guard let latestVWAP = sessionVWAP(bars)?.last else { continue }
                 let stop = savedStop(asset.id)
                 let target = savedTarget(asset.id)
-
-                let exitReason: String?
-                if quote.price <= stop && stop > 0 {
-                    exitReason = "stop hit"
-                } else if quote.price >= target && target > 0 {
-                    exitReason = "2R target hit"
-                } else if quote.price < latestVWAP {
-                    exitReason = "lost VWAP"
-                } else {
-                    exitReason = nil
-                }
-
+                let exitReason: String? = quote.price <= stop && stop > 0 ? "stop hit" : quote.price >= target && target > 0 ? "2R target hit" : quote.price < latestVWAP ? "lost VWAP" : nil
                 if let exitReason {
-                    try portfolio.placeMarketOrder(
-                        asset: asset,
-                        side: .sell,
-                        dollars: nil,
-                        quantity: position.quantity,
-                        price: quote.price
-                    )
+                    try portfolio.placeMarketOrder(asset: asset, side: .sell, dollars: nil, quantity: position.quantity, price: quote.price)
                     let pl = realizedPLForLatestClosedTrade(portfolio, assetID: asset.id)
                     incrementStats(strategy: "VWAP", realizedPL: pl)
                     clearOwner(asset.id)
                     append("SELL \(asset.displaySymbol) \(money(quote.price)) • \(exitReason) • P/L \(money(pl))")
-                    await PhoneNotifier.shared.send(
-                        title: "VWAP CLOSED — \(asset.displaySymbol)",
-                        body: "Sold \(asset.displaySymbol) at \(money(quote.price)). Paper trade P/L \(money(pl)). Trade closed successfully."
-                    )
+                    await PhoneNotifier.shared.send(title: "VWAP CLOSED — \(asset.displaySymbol)", body: "Sold \(asset.displaySymbol) at \(money(quote.price)). Paper trade P/L \(money(pl)). Trade closed successfully.")
                 }
-            } catch {
-                append("VWAP manage skip \(asset.displaySymbol)")
-            }
+            } catch { append("VWAP manage skip \(asset.displaySymbol)") }
         }
 
-        // Then scan entries and calculate a small rolling historical estimate.
         for asset in liquidAssets() {
             do {
                 let bars = try await market.fetchCandles(symbol: asset.symbol, range: "1mo", interval: "5m")
                 let test = backtestVWAP(bars)
                 btWins += test.wins
                 btTrades += test.trades
-
-                if let signal = makeVWAPSignal(asset: asset, bars: bars) {
-                    found.append(signal)
-                }
-            } catch {
-                append("VWAP data unavailable \(asset.displaySymbol)")
-            }
+                if let signal = makeVWAPSignal(asset: asset, bars: bars) { found.append(signal) }
+            } catch { append("VWAP data unavailable \(asset.displaySymbol)") }
             try? await Task.sleep(nanoseconds: 120_000_000)
         }
 
@@ -416,33 +354,19 @@ struct VWAPAutoTraderView: View {
         if enabled {
             for s in signals {
                 if portfolio.positions.count >= maxPositions { break }
-                if portfolio.position(for: s.asset.id) != nil { continue }
-                if strategyOwner(s.asset.id) != nil { continue }
-
+                if portfolio.position(for: s.asset.id) != nil || strategyOwner(s.asset.id) != nil { continue }
                 guard let quote = await market.quote(for: s.asset, force: true) else { continue }
                 let amount = min(maxAllocation, portfolio.cash * 0.20)
                 if amount < 100 { break }
-
                 do {
-                    try portfolio.placeMarketOrder(
-                        asset: s.asset,
-                        side: .buy,
-                        dollars: amount,
-                        quantity: nil,
-                        price: quote.price
-                    )
+                    try portfolio.placeMarketOrder(asset: s.asset, side: .buy, dollars: amount, quantity: nil, price: quote.price)
                     let risk = max(quote.price - s.stop, quote.price * 0.005)
                     let target = quote.price + 2 * risk
                     setOwner("VWAP", assetID: s.asset.id, stop: s.stop, target: target)
                     let winText = backtestTrades > 0 ? "\(pct(Double(backtestWins) / Double(backtestTrades))) over \(backtestTrades) test trades" : "backtest still collecting"
                     append("BUY \(s.asset.displaySymbol) \(money(amount)) @ \(money(quote.price)) • \(winText)")
-                    await PhoneNotifier.shared.send(
-                        title: "VWAP BUY — \(s.asset.displaySymbol)",
-                        body: "Paper bought \(money(amount)) of \(s.asset.displaySymbol) at \(money(quote.price)). Estimated historical win rate: \(winText)."
-                    )
-                } catch {
-                    append("BUY failed \(s.asset.displaySymbol)")
-                }
+                    await PhoneNotifier.shared.send(title: "VWAP BUY — \(s.asset.displaySymbol)", body: "Paper bought \(money(amount)) of \(s.asset.displaySymbol) at \(money(quote.price)). Estimated historical win rate: \(winText).")
+                } catch { append("BUY failed \(s.asset.displaySymbol)") }
             }
         }
 
@@ -453,37 +377,20 @@ struct VWAPAutoTraderView: View {
     private func makeVWAPSignal(asset: Asset, bars: [Candle]) -> VWAPSignal? {
         guard bars.count >= 25 else { return nil }
         let recent = Array(bars.suffix(80))
-        guard let vwapSeries = sessionVWAP(recent), let vwap = vwapSeries.last else { return nil }
+        guard let vwap = sessionVWAP(recent)?.last else { return nil }
         let last = recent[recent.count - 1]
         let prior = recent.dropLast()
         guard prior.count >= 20 else { return nil }
-
         let prior15 = Array(prior.suffix(15))
         let breakout = prior15.map(\.high).max() ?? last.high
         let avgVol = Array(prior.suffix(20)).map(\.volume).reduce(0,+) / 20
         let rvol = avgVol > 0 ? last.volume / avgVol : 0
         let momentumUp = last.close > recent[max(0, recent.count - 6)].close
-
-        guard last.close > vwap,
-              last.close > breakout,
-              rvol >= 1.5,
-              momentumUp else { return nil }
-
+        guard last.close > vwap, last.close > breakout, rvol >= 1.5, momentumUp else { return nil }
         let recentLow = prior15.map(\.low).min() ?? last.close * 0.985
         let stop = max(recentLow, last.close * 0.985)
         let risk = max(last.close - stop, last.close * 0.005)
-        let target = last.close + 2 * risk
-
-        return VWAPSignal(
-            asset: asset,
-            price: last.close,
-            vwap: vwap,
-            rvol: rvol,
-            breakout: breakout,
-            stop: stop,
-            target: target,
-            action: "BUY"
-        )
+        return VWAPSignal(asset: asset, price: last.close, vwap: vwap, rvol: rvol, breakout: breakout, stop: stop, target: last.close + 2 * risk, action: "BUY")
     }
 
     private func sessionVWAP(_ bars: [Candle]) -> [Double]? {
@@ -493,14 +400,9 @@ struct VWAPAutoTraderView: View {
         var cumulativePV = 0.0
         var cumulativeVolume = 0.0
         var out: [Double] = []
-
         for bar in bars {
             let day = cal.dateComponents([.year, .month, .day], from: bar.date)
-            if day != currentDay {
-                currentDay = day
-                cumulativePV = 0
-                cumulativeVolume = 0
-            }
+            if day != currentDay { currentDay = day; cumulativePV = 0; cumulativeVolume = 0 }
             let typical = (bar.high + bar.low + bar.close) / 3
             cumulativePV += typical * bar.volume
             cumulativeVolume += bar.volume
@@ -511,34 +413,15 @@ struct VWAPAutoTraderView: View {
 
     private func backtestVWAP(_ bars: [Candle]) -> (wins: Int, trades: Int) {
         guard bars.count >= 50, let vwaps = sessionVWAP(bars) else { return (0,0) }
-        var wins = 0
-        var trades = 0
+        var wins = 0, trades = 0
         var inTrade = false
-        var entry = 0.0
-        var stop = 0.0
-        var target = 0.0
-
+        var entry = 0.0, stop = 0.0, target = 0.0
         for i in 20..<bars.count {
             let b = bars[i]
-
             if inTrade {
-                if b.low <= stop {
-                    trades += 1
-                    inTrade = false
-                    continue
-                }
-                if b.high >= target {
-                    trades += 1
-                    wins += 1
-                    inTrade = false
-                    continue
-                }
-                if b.close < vwaps[i] {
-                    trades += 1
-                    if b.close > entry { wins += 1 }
-                    inTrade = false
-                    continue
-                }
+                if b.low <= stop { trades += 1; inTrade = false; continue }
+                if b.high >= target { trades += 1; wins += 1; inTrade = false; continue }
+                if b.close < vwaps[i] { trades += 1; if b.close > entry { wins += 1 }; inTrade = false; continue }
             } else {
                 let prior15 = Array(bars[(i-15)..<i])
                 let breakout = prior15.map(\.high).max() ?? b.high
@@ -546,7 +429,6 @@ struct VWAPAutoTraderView: View {
                 let avgVol = prior20.map(\.volume).reduce(0,+) / 20
                 let rvol = avgVol > 0 ? b.volume / avgVol : 0
                 let momentumUp = b.close > bars[max(0, i-5)].close
-
                 if b.close > vwaps[i] && b.close > breakout && rvol >= 1.5 && momentumUp {
                     entry = b.close
                     let recentLow = prior15.map(\.low).min() ?? b.close * 0.985
@@ -565,8 +447,6 @@ struct VWAPAutoTraderView: View {
         if log.count > 100 { log.removeLast(log.count - 100) }
     }
 }
-
-// MARK: - ATH trend
 
 private struct ATHSignal: Identifiable {
     let asset: Asset
@@ -610,9 +490,8 @@ struct ATHAutoTraderView: View {
 
                 summaryCards
 
-                Text("BUY requires a completed daily close at a new all-time high, price above $10, 42-day average dollar volume above $1M, and a valid ATR42 trailing stop. This mirrors the ATH CMD rules you gave me.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                Text("BUY requires a daily close at a new all-time high, price above $10, 42-day average dollar volume above $1M, and a valid ATR42 trailing stop. This mirrors the ATH CMD rules you gave me.")
+                    .font(.footnote).foregroundStyle(.secondary)
 
                 HStack {
                     Button(enabled ? "STOP AUTO" : "START AUTO") {
@@ -622,12 +501,8 @@ struct ATHAutoTraderView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(enabled ? .red : .green)
-
-                    Button("SCAN NOW") {
-                        Task { await scanAndTrade(force: true) }
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(scanning)
+                    Button("SCAN NOW") { Task { await scanAndTrade(force: true) } }
+                        .buttonStyle(.bordered).disabled(scanning)
                 }
 
                 if scanning { ProgressView("Scanning ATH setups…") }
@@ -635,41 +510,31 @@ struct ATHAutoTraderView: View {
 
                 Text("Current ATH setups").font(.title2.bold())
                 if signals.isEmpty {
-                    Text("No new ATH entries right now.")
-                        .foregroundStyle(.secondary)
+                    Text("No new ATH entries right now.").foregroundStyle(.secondary)
                 } else {
                     ForEach(signals) { s in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(s.asset.displaySymbol).bold()
-                                Text("Close \(money(s.close)) • ATR42 \(money(s.atr42)) • Stop \(money(s.stop))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                Text("Close \(money(s.close)) • ATR42 \(money(s.atr42)) • Stop \(money(s.stop))").font(.caption2).foregroundStyle(.secondary)
                             }
                             Spacer()
                             Text(s.action).bold().foregroundStyle(.green)
                         }
-                        .padding(12)
-                        .background(Color.secondary.opacity(0.10))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .padding(12).background(Color.secondary.opacity(0.10)).clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                 }
 
                 Text("Activity").font(.title2.bold())
                 ForEach(Array(log.prefix(20).enumerated()), id: \.offset) { _, line in
-                    Text(line)
-                        .font(.caption.monospaced())
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(line).font(.caption.monospaced()).frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            .padding()
+            }.padding()
         }
         .navigationTitle("ATH")
         .task {
             while !Task.isCancelled {
-                if enabled && Date().timeIntervalSince1970 - lastScanTime >= scanEvery {
-                    await scanAndTrade(force: false)
-                }
+                if enabled && Date().timeIntervalSince1970 - lastScanTime >= scanEvery { await scanAndTrade(force: false) }
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
             }
         }
@@ -686,14 +551,8 @@ struct ATHAutoTraderView: View {
                 StatCard(title: "OPEN POSITIONS", value: "\(portfolio.positions.count)/\(maxPositions)")
             }
             HStack(spacing: 10) {
-                StatCard(
-                    title: "BACKTEST EST.",
-                    value: stats.backtestWinRate.map { "\(pct($0)) • \(stats.backtestTrades) trades" } ?? "collecting"
-                )
-                StatCard(
-                    title: "LIVE PAPER",
-                    value: stats.liveWinRate.map { "\(pct($0)) • \(stats.liveTrades) closed" } ?? "0 closed"
-                )
+                StatCard(title: "BACKTEST EST.", value: stats.backtestWinRate.map { "\(pct($0)) • \(stats.backtestTrades) trades" } ?? "collecting")
+                StatCard(title: "LIVE PAPER", value: stats.liveWinRate.map { "\(pct($0)) • \(stats.liveTrades) closed" } ?? "0 closed")
             }
             HStack(spacing: 10) {
                 StatCard(title: "REALIZED P/L", value: money(stats.realizedPL))
@@ -708,94 +567,59 @@ struct ATHAutoTraderView: View {
         if !force && Date().timeIntervalSince1970 - lastScanTime < scanEvery { return }
         scanning = true
         defer { scanning = false }
-
         status = "Downloading daily market history…"
+
         var found: [ATHSignal] = []
-        var btWins = 0
-        var btTrades = 0
+        var btWins = 0, btTrades = 0
 
         for asset in liquidAssets() {
             do {
                 let bars = try await market.fetchCandles(symbol: asset.symbol, range: "10y", interval: "1d")
                 let prepared = prepareATH(bars)
                 let test = backtestATH(prepared)
-                btWins += test.wins
-                btTrades += test.trades
+                btWins += test.wins; btTrades += test.trades
 
                 if strategyOwner(asset.id) == "ATH",
                    let position = portfolio.position(for: asset.id),
                    let last = prepared.last,
                    let quote = await market.quote(for: asset, force: true) {
-
-                    let oldStop = savedStop(asset.id)
-                    let newStop = max(oldStop, last.rawStop)
+                    let newStop = max(savedStop(asset.id), last.rawStop)
                     setOwner("ATH", assetID: asset.id, stop: newStop, target: 0)
-
                     if quote.price < newStop {
-                        try portfolio.placeMarketOrder(
-                            asset: asset,
-                            side: .sell,
-                            dollars: nil,
-                            quantity: position.quantity,
-                            price: quote.price
-                        )
+                        try portfolio.placeMarketOrder(asset: asset, side: .sell, dollars: nil, quantity: position.quantity, price: quote.price)
                         let pl = realizedPLForLatestClosedTrade(portfolio, assetID: asset.id)
                         incrementStats(strategy: "ATH", realizedPL: pl)
                         clearOwner(asset.id)
                         append("SELL \(asset.displaySymbol) \(money(quote.price)) • trailing stop • P/L \(money(pl))")
-                        await PhoneNotifier.shared.send(
-                            title: "ATH CLOSED — \(asset.displaySymbol)",
-                            body: "Sold \(asset.displaySymbol) at \(money(quote.price)). Paper trade P/L \(money(pl)). Trade closed successfully."
-                        )
+                        await PhoneNotifier.shared.send(title: "ATH CLOSED — \(asset.displaySymbol)", body: "Sold \(asset.displaySymbol) at \(money(quote.price)). Paper trade P/L \(money(pl)). Trade closed successfully.")
                     }
                 }
 
-                if let signal = latestATHSignal(asset: asset, prepared: prepared) {
-                    found.append(signal)
-                }
-            } catch {
-                append("ATH data unavailable \(asset.displaySymbol)")
-            }
+                if let signal = latestATHSignal(asset: asset, prepared: prepared) { found.append(signal) }
+            } catch { append("ATH data unavailable \(asset.displaySymbol)") }
             try? await Task.sleep(nanoseconds: 150_000_000)
         }
 
-        backtestWins = btWins
-        backtestTrades = btTrades
-        signals = found
+        backtestWins = btWins; backtestTrades = btTrades; signals = found
 
         if enabled {
             for s in signals {
                 if portfolio.positions.count >= maxPositions { break }
-                if portfolio.position(for: s.asset.id) != nil { continue }
-                if strategyOwner(s.asset.id) != nil { continue }
-
+                if portfolio.position(for: s.asset.id) != nil || strategyOwner(s.asset.id) != nil { continue }
                 let lastSignalKey = "nexer.ath.lastSignal.\(s.asset.id)"
                 let signalStamp = Int(s.close * 1000) ^ Int(s.priorATH * 1000)
                 if UserDefaults.standard.integer(forKey: lastSignalKey) == signalStamp { continue }
-
                 guard let quote = await market.quote(for: s.asset, force: true) else { continue }
                 let amount = min(maxAllocation, portfolio.cash * 0.20)
                 if amount < 100 { break }
-
                 do {
-                    try portfolio.placeMarketOrder(
-                        asset: s.asset,
-                        side: .buy,
-                        dollars: amount,
-                        quantity: nil,
-                        price: quote.price
-                    )
+                    try portfolio.placeMarketOrder(asset: s.asset, side: .buy, dollars: amount, quantity: nil, price: quote.price)
                     setOwner("ATH", assetID: s.asset.id, stop: s.stop, target: 0)
                     UserDefaults.standard.set(signalStamp, forKey: lastSignalKey)
                     let winText = backtestTrades > 0 ? "\(pct(Double(backtestWins) / Double(backtestTrades))) over \(backtestTrades) test trades" : "backtest still collecting"
                     append("BUY \(s.asset.displaySymbol) \(money(amount)) @ \(money(quote.price)) • \(winText)")
-                    await PhoneNotifier.shared.send(
-                        title: "ATH BUY — \(s.asset.displaySymbol)",
-                        body: "Paper bought \(money(amount)) of \(s.asset.displaySymbol) at \(money(quote.price)). Estimated historical win rate: \(winText). Initial stop \(money(s.stop))."
-                    )
-                } catch {
-                    append("ATH BUY failed \(s.asset.displaySymbol)")
-                }
+                    await PhoneNotifier.shared.send(title: "ATH BUY — \(s.asset.displaySymbol)", body: "Paper bought \(money(amount)) of \(s.asset.displaySymbol) at \(money(quote.price)). Estimated historical win rate: \(winText). Initial stop \(money(s.stop)).")
+                } catch { append("ATH BUY failed \(s.asset.displaySymbol)") }
             }
         }
 
@@ -817,73 +641,45 @@ struct ATHAutoTraderView: View {
         guard bars.count >= 43 else { return [] }
         var trs: [Double] = []
         trs.reserveCapacity(bars.count)
-
         for i in 0..<bars.count {
             let b = bars[i]
-            if i == 0 {
-                trs.append(b.high - b.low)
-            } else {
+            if i == 0 { trs.append(b.high - b.low) }
+            else {
                 let prevClose = bars[i-1].close
-                trs.append(max(
-                    b.high - b.low,
-                    abs(b.high - prevClose),
-                    abs(b.low - prevClose)
-                ))
+                trs.append(max(b.high - b.low, max(abs(b.high - prevClose), abs(b.low - prevClose))))
             }
         }
 
         var result: [ATHRow] = []
         var runningATH = bars[0].close
-
         for i in 0..<bars.count {
             let priorATH = i == 0 ? bars[i].close : runningATH
             runningATH = max(runningATH, bars[i].close)
-
             guard i >= 41 else { continue }
             let atr42 = Array(trs[(i-41)...i]).reduce(0,+) / 42
             let avgDollarVolume = Array(bars[(i-41)...i]).map { $0.close * $0.volume }.reduce(0,+) / 42
             let ratio = max(0.000001, 1 - atr42 / bars[i].close)
             let rawStop = runningATH * pow(ratio, 10)
             let isNewATH = i > 0 && bars[i].close >= priorATH
-
-            result.append(ATHRow(
-                candle: bars[i],
-                atr42: atr42,
-                avgDollarVolume42: avgDollarVolume,
-                priorATH: priorATH,
-                ath: runningATH,
-                rawStop: rawStop,
-                newATH: isNewATH
-            ))
+            result.append(ATHRow(candle: bars[i], atr42: atr42, avgDollarVolume42: avgDollarVolume, priorATH: priorATH, ath: runningATH, rawStop: rawStop, newATH: isNewATH))
         }
         return result
     }
 
     private func latestATHSignal(asset: Asset, prepared: [ATHRow]) -> ATHSignal? {
-        guard let row = prepared.last else { return nil }
-        guard row.candle.close > 10,
+        guard let row = prepared.last,
+              row.candle.close > 10,
               row.avgDollarVolume42 > 1_000_000,
               row.newATH,
               row.rawStop > 0 else { return nil }
-
-        return ATHSignal(
-            asset: asset,
-            close: row.candle.close,
-            priorATH: row.priorATH,
-            atr42: row.atr42,
-            stop: row.rawStop,
-            action: "BUY"
-        )
+        return ATHSignal(asset: asset, close: row.candle.close, priorATH: row.priorATH, atr42: row.atr42, stop: row.rawStop, action: "BUY")
     }
 
     private func backtestATH(_ rows: [ATHRow]) -> (wins: Int, trades: Int) {
         guard !rows.isEmpty else { return (0,0) }
         var inTrade = false
-        var entry = 0.0
-        var stop = 0.0
-        var wins = 0
-        var trades = 0
-
+        var entry = 0.0, stop = 0.0
+        var wins = 0, trades = 0
         for row in rows {
             if inTrade {
                 stop = max(stop, row.rawStop)
@@ -892,9 +688,7 @@ struct ATHAutoTraderView: View {
                     if row.candle.close > entry { wins += 1 }
                     inTrade = false
                 }
-            } else if row.candle.close > 10 &&
-                        row.avgDollarVolume42 > 1_000_000 &&
-                        row.newATH {
+            } else if row.candle.close > 10 && row.avgDollarVolume42 > 1_000_000 && row.newATH {
                 entry = row.candle.close
                 stop = row.rawStop
                 inTrade = true
