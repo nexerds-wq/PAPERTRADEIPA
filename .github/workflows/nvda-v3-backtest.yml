@@ -1,4 +1,4 @@
-name: NVDA V3 Independent Backtest
+name: NVDA Adaptive Independent Backtest
 
 on:
   push:
@@ -20,19 +20,15 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip pandas numpy requests
 
-      - name: Run V3 independent backtest
-        run: python backtest/nvda_v3_backtest.py
+      - name: Search adaptive researched strategy
+        run: python backtest/nvda_adaptive_search.py
 
-      - name: Search researched strategy families
-        run: python backtest/nvda_strategy_search.py
-
-      - name: Upload results
+      - name: Upload adaptive results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nvda-v3-backtest-results
+          name: nvda-adaptive-search-results
           path: |
-            nvda_v3_summary.csv
-            nvda_v3_trades.csv
-            nvda_search_best_params.csv
+            nvda_adaptive_search_results.csv
+            nvda_adaptive_winner.csv
           if-no-files-found: warn
