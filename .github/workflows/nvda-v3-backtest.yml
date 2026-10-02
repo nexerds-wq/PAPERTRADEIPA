@@ -1,4 +1,4 @@
-name: NVDA Strict ORB Independent Backtest
+name: NVDA Internet Filter Independent Backtest
 
 on:
   push:
@@ -17,14 +17,14 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: python -m pip install --upgrade pip pandas numpy requests
-      - name: Search strict ORB expansions
-        run: python backtest/nvda_rank7_expand.py
+      - name: Search internet-inspired ORB filters
+        run: python backtest/nvda_internet_filters_search.py
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nvda-strict-orb-results
+          name: nvda-internet-filter-results
           path: |
-            nvda_rank7_expand_results.csv
-            nvda_rank7_winner.csv
+            nvda_internet_filters_results.csv
+            nvda_internet_filters_winner.csv
           if-no-files-found: warn
