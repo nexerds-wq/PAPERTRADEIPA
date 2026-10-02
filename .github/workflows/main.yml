@@ -6,83 +6,55 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ipa-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 15
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show repository files
+      - name: Cache Xcode build data
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-xcode-${{ hashFiles('NexerPaperTrader.xcodeproj/project.pbxproj', 'NexerPaperTrader/**/*.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode-
+
+      - name: Build unsigned app
         run: |
-          echo "CURRENT DIRECTORY:"
-          pwd
-
-          echo "PROJECT FILES:"
-          find . -name "*.xcodeproj" -print
-
-          echo "ALL FILES:"
-          find . -maxdepth 4 -type f | sort
-
-      - name: Find Xcode project
-        run: |
-          PROJECT=$(find . -name "*.xcodeproj" -type d | head -n 1)
-
-          if [ -z "$PROJECT" ]; then
-            echo "ERROR: No .xcodeproj was found anywhere in the repository."
-            exit 1
-          fi
-
-          echo "Found project: $PROJECT"
-          echo "PROJECT_PATH=$PROJECT" >> "$GITHUB_ENV"
-
-      - name: Find scheme
-        run: |
-          echo "Available schemes:"
-          xcodebuild -project "$PROJECT_PATH" -list
-
-      - name: Build unsigned iPhone app
-        run: |
-          rm -rf build
-          mkdir -p build
-
           xcodebuild \
-            -project "$PROJECT_PATH" \
+            -project NexerPaperTrader.xcodeproj \
             -scheme NexerPaperTrader \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build/DerivedData \
+            -parallelizeTargets \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Find built app
+      - name: Package IPA
         run: |
-          APP_PATH=$(find build/DerivedData/Build/Products -name "*.app" -type d | head -n 1)
-
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Built .app could not be found."
-            exit 1
-          fi
-
-          echo "Found app:"
-          echo "$APP_PATH"
-
-          echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
-
-      - name: Create IPA
-        run: |
-          rm -rf Payload
+          APP_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" -type d | head -n 1)
+          test -n "$APP_PATH" || { echo "Built app not found"; exit 1; }
+          rm -rf Payload NexerPaperTrader-Unsigned.ipa
           mkdir Payload
-
           cp -R "$APP_PATH" Payload/
-
-          zip -r NexerPaperTrader-Unsigned.ipa Payload
+          ditto -c -k --sequesterRsrc --keepParent Payload NexerPaperTrader-Unsigned.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: NexerPaperTrader-Unsigned-IPA
           path: NexerPaperTrader-Unsigned.ipa
+          compression-level: 0
+          if-no-files-found: error
