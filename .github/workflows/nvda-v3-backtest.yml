@@ -1,4 +1,4 @@
-name: NVDA Adaptive Independent Backtest
+name: NVDA Multi ORB Independent Backtest
 
 on:
   push:
@@ -12,23 +12,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install dependencies
         run: python -m pip install --upgrade pip pandas numpy requests
-
-      - name: Search adaptive researched strategy
-        run: python backtest/nvda_adaptive_search.py
-
-      - name: Upload adaptive results
+      - name: Search multi-range ORB
+        run: python backtest/nvda_multi_orb_search.py
+      - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nvda-adaptive-search-results
+          name: nvda-multi-orb-results
           path: |
-            nvda_adaptive_search_results.csv
-            nvda_adaptive_winner.csv
+            nvda_multi_orb_results.csv
+            nvda_multi_orb_winner.csv
           if-no-files-found: warn
