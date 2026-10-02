@@ -19,6 +19,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Fix Swift actor annotation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("NexerPaperTrader/Views/RootView.swift")
+          s = p.read_text()
+          old = "private func realizedPLForLatestClosedTrade(_ portfolio: PortfolioStore, assetID: String) -> Double {"
+          new = "@MainActor\nprivate func realizedPLForLatestClosedTrade(_ portfolio: PortfolioStore, assetID: String) -> Double {"
+          if old in s and "@MainActor\n" + old not in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s)
+          PY
+
       - name: Cache Xcode build data
         uses: actions/cache@v4
         with:
