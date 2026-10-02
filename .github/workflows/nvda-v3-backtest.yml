@@ -9,7 +9,7 @@ on:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -20,8 +20,11 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip pandas numpy requests
 
-      - name: Run independent backtest
+      - name: Run V3 independent backtest
         run: python backtest/nvda_v3_backtest.py
+
+      - name: Search researched strategy families
+        run: python backtest/nvda_strategy_search.py
 
       - name: Upload results
         if: always()
@@ -31,4 +34,5 @@ jobs:
           path: |
             nvda_v3_summary.csv
             nvda_v3_trades.csv
+            nvda_search_best_params.csv
           if-no-files-found: warn
