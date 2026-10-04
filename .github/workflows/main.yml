@@ -19,17 +19,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fix Swift actor annotation
+      - name: Prepare professional auto trader sources
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("NexerPaperTrader/Views/RootView.swift")
-          s = p.read_text()
-          old = "private func realizedPLForLatestClosedTrade(_ portfolio: PortfolioStore, assetID: String) -> Double {"
-          new = "@MainActor\nprivate func realizedPLForLatestClosedTrade(_ portfolio: PortfolioStore, assetID: String) -> Double {"
-          if old in s and "@MainActor\n" + old not in s:
-              s = s.replace(old, new, 1)
-              p.write_text(s)
+          parts = [
+              Path('NexerPaperTrader/Models/ProTradingModels.swift').read_text(),
+              Path('NexerPaperTrader/Utilities/ProTradingEngine.swift').read_text(),
+              Path('NexerPaperTrader/Views/ProfessionalAutoTraderView.swift').read_text(),
+              Path('NexerPaperTrader/Views/RootView.swift').read_text(),
+          ]
+          Path('NexerPaperTrader/Views/RootView.swift').write_text('\n\n'.join(parts))
           PY
 
       - name: Cache Xcode build data
