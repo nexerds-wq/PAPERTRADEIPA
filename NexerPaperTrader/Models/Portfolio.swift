@@ -17,6 +17,14 @@ struct Position: Identifiable, Codable, Hashable {
     var averagePrice: Double
 }
 
+struct ShortPosition: Identifiable, Codable, Hashable {
+    var id: String { assetID }
+    let assetID: String
+    var quantity: Double
+    var averagePrice: Double
+    var margin: Double
+}
+
 struct PaperOrder: Identifiable, Codable, Hashable {
     let id: UUID
     let assetID: String
@@ -35,6 +43,16 @@ struct ClosedTrade: Identifiable, Codable, Hashable {
     let quantity: Double
     let averageBuyPrice: Double
     let sellPrice: Double
+    let realizedPL: Double
+    let closedAt: Date
+}
+
+struct ClosedShortTrade: Identifiable, Codable, Hashable {
+    let id: UUID
+    let assetID: String
+    let quantity: Double
+    let averageShortPrice: Double
+    let coverPrice: Double
     let realizedPL: Double
     let closedAt: Date
 }

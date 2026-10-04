@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HistoryView: View {
     @EnvironmentObject var portfolio: PortfolioStore
+    @EnvironmentObject var market: MarketDataService
 
     var body: some View {
         List {
@@ -10,34 +11,34 @@ struct HistoryView: View {
                     Text("No orders yet").foregroundStyle(.secondary)
                 }
 
-                ForEach(portfolio.orders) { o in
+                ForEach(portfolio.orders) { order in
                     VStack(alignment: .leading, spacing: 7) {
                         HStack {
-                            Text("\(o.side.rawValue.capitalized) \(display(o.assetID))")
+                            Text("\(order.side.rawValue.capitalized) \(display(order.assetID))")
                                 .font(.headline)
                             Spacer()
-                            statusBadge(o.status)
+                            statusBadge(order.status)
                         }
 
                         HStack {
-                            Text("\(o.quantity, specifier: "%.6f") units")
+                            Text("\(order.quantity, specifier: "%.6f") units")
                             Spacer()
-                            if let fill = o.fillPrice {
-                                Text("Fill \(formatPrice(fill, assetID: o.assetID))")
-                            } else if let requested = o.requestedPrice {
-                                Text("Limit \(formatPrice(requested, assetID: o.assetID))")
+                            if let fill = order.fillPrice {
+                                Text("Fill \(formatPrice(fill, assetID: order.assetID))")
+                            } else if let requested = order.requestedPrice {
+                                Text("Limit \(formatPrice(requested, assetID: order.assetID))")
                             }
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                        Text(o.createdAt.formatted(date: .abbreviated, time: .shortened))
+                        Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
 
-                        if o.status == .open {
+                        if order.status == .open {
                             Button(role: .destructive) {
-                                _ = portfolio.cancelOrder(id: o.id)
+                                _ = portfolio.cancelOrder(id: order.id)
                             } label: {
                                 Label("Cancel Order", systemImage: "xmark.circle.fill")
                             }
@@ -48,33 +49,47 @@ struct HistoryView: View {
                 }
             }
 
-            Section("Closed Trades") {
+            Section("Closed Long Trades") {
                 if portfolio.closedTrades.isEmpty {
-                    Text("No closed positions yet").foregroundStyle(.secondary)
+                    Text("No closed longs yet").foregroundStyle(.secondary)
                 }
 
-                ForEach(portfolio.closedTrades) { t in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(display(t.assetID)).font(.headline)
-                            Text(t.closedAt.formatted(date: .abbreviated, time: .shortened))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text("\(t.realizedPL >= 0 ? "+" : "")\(t.realizedPL, format: .currency(code: "USD"))")
-                            .foregroundStyle(t.realizedPL >= 0 ? .green : .red)
-                    }
+                ForEach(portfolio.closedTrades) { trade in
+                    closedRow(symbol: display(trade.assetID), date: trade.closedAt, pl: trade.realizedPL, label: "LONG")
+                }
+            }
+
+            Section("Closed Short Trades") {
+                if portfolio.closedShortTrades.isEmpty {
+                    Text("No closed paper shorts yet").foregroundStyle(.secondary)
+                }
+
+                ForEach(portfolio.closedShortTrades) { trade in
+                    closedRow(symbol: display(trade.assetID), date: trade.closedAt, pl: trade.realizedPL, label: "SHORT")
                 }
             }
         }
         .navigationTitle("History")
         .toolbar {
             if portfolio.orders.contains(where: { $0.status == .open }) {
-                Button("Cancel All", role: .destructive) {
-                    portfolio.cancelAllOpenOrders()
-                }
+                Button("Cancel All", role: .destructive) { portfolio.cancelAllOpenOrders() }
             }
+        }
+    }
+
+    private func closedRow(symbol: String, date: Date, pl: Double, label: String) -> some View {
+        HStack {
+            VStack(alignment: .leading) {
+                HStack {
+                    Text(symbol).font(.headline)
+                    Text(label).font(.caption2.bold()).foregroundStyle(label == "SHORT" ? .red : .green)
+                }
+                Text(date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text("\(pl >= 0 ? "+" : "")\(pl, format: .currency(code: "USD"))")
+                .foregroundStyle(pl >= 0 ? .green : .red)
         }
     }
 
@@ -96,19 +111,15 @@ struct HistoryView: View {
             }
         }()
 
-        Text(title)
-            .font(.caption2.bold())
-            .foregroundStyle(color)
+        Text(title).font(.caption2.bold()).foregroundStyle(color)
     }
 
-    func display(_ id: String) -> String {
-        Asset.universe.first(where: { $0.id == id })?.displaySymbol ?? id
+    private func display(_ id: String) -> String {
+        market.asset(forID: id)?.displaySymbol ?? id
     }
 
-    func formatPrice(_ price: Double, assetID: String) -> String {
-        guard let asset = Asset.universe.first(where: { $0.id == assetID }) else {
-            return String(format: "%.4f", price)
-        }
+    private func formatPrice(_ price: Double, assetID: String) -> String {
+        guard let asset = market.asset(forID: assetID) else { return String(format: "%.4f", price) }
         if asset.type == .forex { return String(format: "%.5f", price) }
         if asset.type == .crypto && price < 1 { return String(format: "$%.6f", price) }
         return price.formatted(.currency(code: "USD"))
