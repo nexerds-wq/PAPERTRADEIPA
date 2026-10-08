@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import PhotosUI
 import UniformTypeIdentifiers
 import Security
@@ -278,7 +279,8 @@ private struct DashboardScreen: View {
                     if !error.isEmpty { Text(error).foregroundStyle(.orange).font(.caption) }
                     Text("SYSTEM MODULES").font(.headline)
                     LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 10) {
-                        ForEach(categories, id: \.0) { category in
+                        ForEach(categories.indices, id: \.self) { index in
+                            let category = categories[index]
                             panel {
                                 Image(systemName: category.1)
                                     .foregroundStyle(NexerStyle.accent)
