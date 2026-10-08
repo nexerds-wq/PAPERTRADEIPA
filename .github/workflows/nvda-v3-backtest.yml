@@ -1,0 +1,30 @@
+name: NVDA Internet Filter Independent Backtest
+
+on:
+  push:
+    branches:
+      - backtest-nvda-v3
+  workflow_dispatch:
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pandas numpy requests
+      - name: Search internet-inspired ORB filters
+        run: python backtest/nvda_internet_filters_search.py
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nvda-internet-filter-results
+          path: |
+            nvda_internet_filters_results.csv
+            nvda_internet_filters_winner.csv
+          if-no-files-found: warn
