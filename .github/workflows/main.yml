@@ -1,4 +1,4 @@
-name: Build NexerPaperTrader IPA
+name: Build NEXER Repair IPA
 
 on:
   workflow_dispatch:
@@ -7,67 +7,45 @@ on:
       - main
 
 concurrency:
-  group: ipa-build-${{ github.ref }}
+  group: nexer-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare professional auto trader sources
+      - name: Build unsigned iOS app
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          parts = [
-              Path('NexerPaperTrader/Models/ProTradingModels.swift').read_text(),
-              Path('NexerPaperTrader/Utilities/ProTradingEngine.swift').read_text(),
-              Path('NexerPaperTrader/Views/ProfessionalAutoTraderView.swift').read_text(),
-              Path('NexerPaperTrader/Views/RootView.swift').read_text(),
-          ]
-          Path('NexerPaperTrader/Views/RootView.swift').write_text('\n\n'.join(parts))
-          PY
-
-      - name: Cache Xcode build data
-        uses: actions/cache@v4
-        with:
-          path: build/DerivedData
-          key: ${{ runner.os }}-xcode-${{ hashFiles('NexerPaperTrader.xcodeproj/project.pbxproj', 'NexerPaperTrader/**/*.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-xcode-
-
-      - name: Build unsigned app
-        run: |
+          set -euo pipefail
           xcodebuild \
             -project NexerPaperTrader.xcodeproj \
             -scheme NexerPaperTrader \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build/DerivedData \
-            -parallelizeTargets \
             COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Package IPA
+      - name: Package unsigned IPA
         run: |
+          set -euo pipefail
           APP_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" -type d | head -n 1)
           test -n "$APP_PATH" || { echo "Built app not found"; exit 1; }
-          rm -rf Payload NexerPaperTrader-Unsigned.ipa
-          mkdir Payload
+          mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NexerPaperTrader-Unsigned.ipa
+          ditto -c -k --sequesterRsrc --keepParent Payload NEXER-Repair-Unsigned.ipa
 
-      - name: Upload IPA
+      - name: Upload unsigned IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NexerPaperTrader-Unsigned-IPA
-          path: NexerPaperTrader-Unsigned.ipa
+          name: NEXER-Repair-Unsigned-IPA
+          path: NEXER-Repair-Unsigned.ipa
           compression-level: 0
           if-no-files-found: error
