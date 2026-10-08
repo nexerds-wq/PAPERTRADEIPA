@@ -18,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check Windows agent syntax and safety
+        run: |
+          python3 -m py_compile WindowsAgent/nexer_agent.py WindowsAgent/nexer_desktop.py
+          python3 -m unittest discover -s WindowsAgent -p 'test_*.py' -v
+
       - name: Build unsigned iOS app
         run: |
           set -euo pipefail
