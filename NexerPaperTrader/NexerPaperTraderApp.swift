@@ -473,7 +473,7 @@ private struct ChatScreen: View {
                 let result: ActionReply = try await api.request("/approve", body: ["id": item.id])
                 lines.append(ChatLine(role: "assistant", text: result.output ?? "Repair request finished"))
                 pending.removeAll { $0.id == item.id }
-            } catch { error = error.localizedDescription }
+            } catch { self.error = error.localizedDescription }
         }
     }
 }
